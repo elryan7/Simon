@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simon</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #e6ecf0, #b0c4de);
+            color: #333;
+        }
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.85);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(5px);
+            max-width: 90vw;
+        }
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+        }
+        .controls {
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background: #4682b4;
+            color: #fff;
+            transition: background 0.3s ease;
+        }
+        button:hover {
+            background: #5a9bd4;
+        }
+        .info {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+        .high-score {
+            font-size: 1em;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 150px);
+            gap: 10px;
+            background: #d3d9e0;
+            padding: 10px;
+            border-radius: 10px;
+        }
+        .cell {
+            width: 150px;
+            height: 150px;
+            border: 2px solid #a0a8b0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .cell:hover {
+            opacity: 0.9;
+        }
+        .cell.active {
+            transform: scale(1.1);
+            opacity: 0.6;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 1em;
+            color: #2c3e50;
+        }
+        .footer a {
+            color: #4682b4;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        .footer a:hover {
+            color: #5a9bd4;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Simon</h1>
+        <div class="controls">
+            <button onclick="startGame()">Démarrer</button>
+        </div>
+        <div class="info">
+            Score: <span id="score">0</span>
+        </div>
+        <div class="high-score">
+            Meilleur score: <span id="high-score">0</span>
+        </div>
+        <div class="grid" id="grid">
+            <div class="cell" style="background: #e57373;" data-index="0"></div>
+            <div class="cell" style="background: #81c784;" data-index="1"></div>
+            <div class="cell" style="background: #64b5f6;" data-index="2"></div>
+            <div class="cell" style="background: #ffca28;" data-index="3"></div>
+        </div>
+        <div class="footer">
+            Créé par <a href="https://github.com/elryan7" target="_blank">elryan7</a>
+        </div>
+    </div>
+    <script>
+        let sequence = [];
+        let playerSequence = [];
+        let score = 0;
+        let highScore = parseInt(localStorage.getItem('simonHighScore') || 0);
+        let isPlaying = false;
+
+        document.getElementById('high-score').textContent = highScore;
+
+        function startGame() {
+            sequence = [];
+            playerSequence = [];
+            score = 0;
+            isPlaying = false;
+            document.getElementById('score').textContent = score;
+            nextRound();
+        }
+
+        function nextRound() {
+            playerSequence = [];
+            sequence.push(Math.floor(Math.random() * 4));
+            isPlaying = false;
+            playSequence();
+        }
+
+        function playSequence() {
+            let i = 0;
+            const interval = setInterval(() => {
+                if (i >= sequence.length) {
+                    clearInterval(interval);
+                    isPlaying = true;
+                    return;
+                }
+                const index = sequence[i];
+                const cell = document.querySelector(`[data-index="${index}"]`);
+                cell.classList.add('active');
+                setTimeout(() => cell.classList.remove('active'), 600);
+                i++;
+            }, 1000);
+        }
+
+        function handleClick(index) {
+            if (!isPlaying) return;
+            playerSequence.push(index);
+            const cell = document.querySelector(`[data-index="${index}"]`);
+            cell.classList.add('active');
+            setTimeout(() => cell.classList.remove('active'), 300);
+
+            if (playerSequence.length === sequence.length) {
+                if (playerSequence.every((val, i) => val === sequence[i])) {
+                    score++;
+                    document.getElementById('score').textContent = score;
+                    highScore = Math.max(highScore, score);
+                    localStorage.setItem('simonHighScore', highScore);
+                    document.getElementById('high-score').textContent = highScore;
+                    setTimeout(nextRound, 1000);
+                } else {
+                    alert(`Game Over ! Score: ${score}`);
+                    startGame();
+                }
+            } else if (!playerSequence.every((val, i) => val === sequence[i])) {
+                alert(`Game Over ! Score: ${score}`);
+                startGame();
+            }
+        }
+
+        document.querySelectorAll('.cell').forEach(cell => {
+            cell.addEventListener('click', () => handleClick(parseInt(cell.dataset.index)));
+        });
+    </script>
+</body>
+</html>
